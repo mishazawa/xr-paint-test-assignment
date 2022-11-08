@@ -4,17 +4,22 @@ import {
   Engine,
   FreeCamera,
   Scene,
-  Light,
   Mesh,
   Color3,
   Color4,
   Vector3,
   HemisphericLight,
   StandardMaterial,
-  Texture,
   DynamicTexture,
-  Space
+  WebXRDefaultExperience,
+  WebXRExperienceHelper,
+  PointerEventTypes,
+  Path3D
 } from '@babylonjs/core';
+
+
+
+const CAMERA_POSITION = new Vector3(0, 0, 0);
 
 @Injectable({ providedIn: 'root' })
 export class EngineService {
@@ -22,9 +27,7 @@ export class EngineService {
   private engine: Engine;
   private camera: FreeCamera;
   private scene: Scene;
-  private light: Light;
-
-  private sphere: Mesh;
+  private xr: WebXRDefaultExperience;
 
   public constructor(
     private ngZone: NgZone,
@@ -40,42 +43,33 @@ export class EngineService {
 
     // create a basic BJS Scene object
     this.scene = new Scene(this.engine);
-    this.scene.clearColor = new Color4(0, 0, 0, 0);
+    this.scene.clearColor = new Color4(.5, .5, .5, 1);
 
-    // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
-    this.camera = new FreeCamera('camera1', new Vector3(5, 10, -20), this.scene);
-
-    // target the camera to scene origin
+    this.camera = new FreeCamera('camera1', CAMERA_POSITION, this.scene);
     this.camera.setTarget(Vector3.Zero());
-
-    // attach the camera to the canvas
     this.camera.attachControl(this.canvas, false);
 
-    // create a basic light, aiming 0,1,0 - meaning, to the sky
-    this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
+    this.showWorldAxis(8); // to be removed
 
-    // create a built-in "sphere" shape; its constructor takes 4 params: name, subdivisions, radius, scene
-    this.sphere = Mesh.CreateSphere('sphere1', 16, 2, this.scene);
+    var light = new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
+    light.intensity = 0.7;
 
-    // create the material with its texture for the sphere and assign it to the sphere
-    const spherMaterial = new StandardMaterial('sun_surface', this.scene);
-    spherMaterial.diffuseTexture = new Texture('assets/textures/sun.jpg', this.scene);
-    this.sphere.material = spherMaterial;
+    const env = this.scene.createDefaultEnvironment();
 
-    // move the sphere upward 1/2 of its height
-    this.sphere.position.y = 1;
+    // here we add XR support
+    this.scene.createDefaultXRExperienceAsync({
+      floorMeshes: [env.ground],
+    }).then((v) => {
+      this.xr = v;
+      WebXRExperienceHelper.CreateAsync(this.scene).then((xrHelper) => {
+        xrHelper.enterXRAsync("immersive-vr", "local-floor").catch(console.warn);
+      }).catch(console.warn)
 
-    // simple rotation along the y axis
-    this.scene.registerAfterRender(() => {
-      this.sphere.rotate (
-        new Vector3(0, 1, 0),
-        0.02,
-        Space.LOCAL
-      );
-    });
+    }).catch(console.warn);
+  }
 
-    // generates the world x-y-z axis for better understanding
-    this.showWorldAxis(8);
+  public attachPlayerControls() {
+
   }
 
   public animate(): void {
