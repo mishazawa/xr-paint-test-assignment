@@ -13,13 +13,19 @@ import {
   DynamicTexture,
   WebXRDefaultExperience,
   WebXRExperienceHelper,
-  PointerEventTypes,
-  Path3D
+  AbstractMesh,
 } from '@babylonjs/core';
 
+const HANDNESS_LEFT = 'left';
+const HANDNESS_RIGHT = 'right';
 
+const BUTTON_TRIGGER_ID = 'xr-standard-trigger';
 
 const CAMERA_POSITION = new Vector3(0, 0, 0);
+
+let line = {
+  positions: [],
+}
 
 @Injectable({ providedIn: 'root' })
 export class EngineService {
@@ -29,12 +35,14 @@ export class EngineService {
   private scene: Scene;
   private xr: WebXRDefaultExperience;
 
+  private triggerState: boolean = false;
+
   public constructor(
     private ngZone: NgZone,
     private windowRef: WindowRefService
   ) {}
 
-  public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
+  public async createScene(canvas: ElementRef<HTMLCanvasElement>): Promise<void> {
     // The first step is to get the reference of the canvas element from our HTML document
     this.canvas = canvas.nativeElement;
 
@@ -57,19 +65,49 @@ export class EngineService {
     const env = this.scene.createDefaultEnvironment();
 
     // here we add XR support
-    this.scene.createDefaultXRExperienceAsync({
+    this.xr = await this.scene.createDefaultXRExperienceAsync({
       floorMeshes: [env.ground],
-    }).then((v) => {
-      this.xr = v;
-      WebXRExperienceHelper.CreateAsync(this.scene).then((xrHelper) => {
-        xrHelper.enterXRAsync("immersive-vr", "local-floor").catch(console.warn);
-      }).catch(console.warn)
+    });
 
-    }).catch(console.warn);
+    // let xrHelper = await WebXRExperienceHelper.CreateAsync(this.scene);
+    // await xrHelper.enterXRAsync("immersive-vr", "local-floor"); // emu controllers not work
   }
 
   public attachPlayerControls() {
+    this.xr.input.onControllerAddedObservable.add((controller) => {
+      controller.onMotionControllerInitObservable.add((motionController) => {
 
+        // todo fix motion controller/controller mess
+        this.assignControllerHandlers(motionController.handness, controller.pointer);
+
+        this.assignControllerTriggerHandlers(motionController);
+      });
+    });
+  }
+
+  private assignControllerHandlers(handness, pointer) {
+    if (handness === HANDNESS_RIGHT) {
+      this.scene.onBeforeRenderObservable.add(() => this.handleRightController(pointer))
+    }
+  }
+
+  private assignControllerTriggerHandlers(motionController) {
+    if (motionController.handness === HANDNESS_RIGHT) {
+      let triggerComponent = motionController.getComponent(BUTTON_TRIGGER_ID);
+      triggerComponent.onButtonStateChangedObservable.add(({pressed}) => this.triggerState = pressed);
+    }
+  }
+
+  private handleRightController(pointer) {
+    if (this.triggerState) {
+      // check distance threshold to not draw too much points
+      this.draw(pointer.position);
+    }
+  }
+
+
+  private draw (p: Vector3) {
+    line.positions.push(p);
   }
 
   public animate(): void {

@@ -13,8 +13,9 @@ export class EngineComponent implements OnInit {
   public constructor(private engServ: EngineService) { }
 
   public ngOnInit(): void {
-    this.engServ.createScene(this.rendererCanvas);
-    this.engServ.attachPlayerControls();
-    this.engServ.animate();
+    this.engServ.createScene(this.rendererCanvas).then(() => {
+      this.engServ.attachPlayerControls();
+      this.engServ.animate();
+    });
   }
 }
