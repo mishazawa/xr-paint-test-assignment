@@ -15,6 +15,14 @@ export class ControllerHandler {
   private lastPosition: Vector3;
   private _threshold: number = .0001;
 
+  public get position () {
+    return this.lastPosition;
+  }
+
+  public get up () {
+    return this.controller.pointer.up.normalize();
+  }
+
   public get movementThreshold() {
     return this._threshold;
   }
