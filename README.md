@@ -9,9 +9,18 @@
 1. build `yarn build:prod`
 2. push to firebase `yarn deploy`
 
+### Demo
+
 [Online demo https://xr-paint.web.app/](https://xr-paint.web.app/)
 
+#### Youtube Video
+
+[![youtube demo](https://img.youtube.com/vi/w2WTh8eV8QE/hqdefault.jpg)](https://youtu.be/w2WTh8eV8QE)
+
+
 ### Controls 
+
+There is no ability to bind buttons in emulator.
 
  - `+` button - increase brush size (max = 1 meter)
  - `-` button - decrease brush size (min = .01 meter)
