@@ -1,6 +1,5 @@
 import {
   Observable,
-  PointerEventTypes,
   Scene,
   Vector3,
   WebXRInputSource
