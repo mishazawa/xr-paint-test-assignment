@@ -1185,6 +1185,11 @@
   resolved "https://registry.yarnpkg.com/@babylonjs/core/-/core-5.31.2.tgz#089096c934b35137d618d3da1eb51eed859a26ac"
   integrity sha512-7mD2SYDDngafq5GhJtOBd4myHmej+Ol00OwGt+612yCw0CW3ScKMD4haWjSyPLy3JE428fi4ZtK40/QjtXHvUw==
 
+"@babylonjs/gui@^5.32.1":
+  version "5.32.1"
+  resolved "https://registry.yarnpkg.com/@babylonjs/gui/-/gui-5.32.1.tgz#c4e297aa658797c6a41c663f826e0ef3c94a15ad"
+  integrity sha512-KsXX3wSNMUEpATlcKqJ93so7wcqa+FQYxPjUCCcQXzle0e7zn3G+gi0vegozKztzYiCJqx4rbbm/22OD8z2xLw==
+
 "@babylonjs/materials@^5.21.0":
   version "5.31.2"
   resolved "https://registry.yarnpkg.com/@babylonjs/materials/-/materials-5.31.2.tgz#fc5f5ab910f5f1a2be5e2669a4cd64c30271f645"

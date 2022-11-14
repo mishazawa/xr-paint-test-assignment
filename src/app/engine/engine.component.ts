@@ -1,7 +1,11 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { EngineService } from './engine.service';
+
 import { PainterService } from './painter/painter.service';
-import { ControllerHandler } from './painter/ControllerHandler';
+
+// import { CubeBrush } from './painter/brushes/CubeBrush';
+import { MeshBrush } from './painter/brushes/MeshBrush';
+
 
 @Component({
   selector: 'app-engine',
@@ -9,25 +13,21 @@ import { ControllerHandler } from './painter/ControllerHandler';
 })
 export class EngineComponent implements OnInit {
 
-  private rightController: ControllerHandler;
-
   @ViewChild('rendererCanvas', { static: true })
   public rendererCanvas: ElementRef<HTMLCanvasElement>;
 
-  public constructor(private engServ: EngineService, private painterService: PainterService) { }
+  public constructor(private engServ: EngineService, private painterServ: PainterService) { }
 
   public ngOnInit(): void {
     this.engServ.createScene(this.rendererCanvas).then((scene) => {
-      this.painterService.addScene(scene);
+      this.painterServ.addScene(scene);
+      this.painterServ.addMenu();
 
       this.engServ.onControllerAdded.add((ctl) => {
 
         if (ctl.motionController.handedness === 'right') {
-          this.painterService.addRightHand(ctl);
-        }
-
-        if (ctl.motionController.handedness === 'left') {
-          this.painterService.addLeftHand(ctl);
+          this.painterServ.addRightHand(ctl);
+          this.painterServ.setBrush(new MeshBrush());
         }
 
       });

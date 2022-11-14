@@ -1,140 +1,117 @@
 import { Injectable } from "@angular/core";
 import {
-    Material,
-    Mesh,
+    Color3,
     Scene,
-    StandardMaterial,
     Vector3,
-    VertexBuffer,
     WebXRInputSource
 } from "@babylonjs/core";
+
+import { Button3D, GUI3DManager, StackPanel3D, TextBlock } from '@babylonjs/gui';
+
 import { ControllerHandler } from "./ControllerHandler";
 
-const SIMULTANEOUS_ADDED_VERTICES = 2;
-const VERTEX_BUFFER_STRIDE = 3;
+import { IBrush } from "./brushes/IBrush";
 
+const createButton = (text) => {
+    const btn = new Button3D(text);
+    const txtContent = new TextBlock();
+    txtContent.text = text;
+    txtContent.color = "white";
+    txtContent.fontSize = 150;
+    btn.content = txtContent;
+    return btn;
+}
+
+const randomColor = () => {
+  return new Color3(
+    0.5 + Math.random(),
+    0.5 + Math.random(),
+    0.5 + Math.random());
+}
 
 @Injectable({ providedIn: 'root' })
 export class PainterService {
   private rightHand: ControllerHandler;
   private scene: Scene;
-  private canPaint: boolean;
+  private isPressed: boolean;
 
-  public scale = .025;
+  private brush: IBrush;
+  private scale = .025;
 
-  private mat: Material;
+  private gui: GUI3DManager;
+  private panelBrush: StackPanel3D;
 
-  private mesh: Mesh;
-  private indices: Uint32Array;
-  private positions: Float32Array;
-  private currentIndex: number = 0;
-  private currentIndexBufferSize: number = 2;
+  public setBrush (brush: IBrush) {
+    if (this.brush) {
+      this.brush.end();
+    }
+
+    this.brush = brush;
+    this.brush.init({scene: this.scene, controller: this.rightHand});
+    this.brush.setSize(this.scale);
+
+  }
 
   public addScene (scene: Scene) {
     this.scene = scene;
-    this.mat = new StandardMaterial("texture1", this.scene);
-    this.mat.backFaceCulling = false;
-    // this.mat.wireframe = true;
+  }
+
+  public addMenu () {
+    this.gui = new GUI3DManager(this.scene);
+    this.panelBrush = new StackPanel3D();
+
+    this.gui.addControl(this.panelBrush);
+
+    this.panelBrush.isVertical = true;
+    this.panelBrush.position.x = -.1;
+    this.panelBrush.scaling = Vector3.One().scaleInPlace(.1);
+
+    const btnBrushSizeInc = createButton("+");
+    const btnBrushSizeDec = createButton("-");
+    const btnRandColor    = createButton("R");
+
+    this.panelBrush.addControl(btnRandColor);
+    this.panelBrush.addControl(btnBrushSizeDec);
+    this.panelBrush.addControl(btnBrushSizeInc);
+
+
+    btnBrushSizeInc.onPointerClickObservable.add(() => {
+      this.scale += 0.1;
+      this.brush.setSize(this.scale);
+    });
+
+    btnBrushSizeDec.onPointerClickObservable.add(() => {
+      this.scale -= 0.1;
+      this.brush.setSize(this.scale);
+    });
+
+    btnRandColor.onPointerClickObservable.add(() => {
+      this.brush.setColor(randomColor());
+    })
   }
 
   public addRightHand (controller: WebXRInputSource) {
     this.rightHand = new ControllerHandler(controller, this.scene)
-    this.rightHand.onTrigger.add(t => this.triggerPaint(t));
-    this.rightHand.onMove.add(c => this.paint(c));
+
+    this.rightHand.onTrigger.add(t => this.trigger(t));
+    this.rightHand.onMove.add(c => this.movement(c));
+
+    this.panelBrush.linkToTransformNode(this.rightHand.pointer);
   }
 
-  public addLeftHand (controller: WebXRInputSource) {
-
-  }
-
-  private triggerPaint ({pressed}) {
-    this.canPaint = pressed;
+  private trigger (pressed: boolean) {
+    this.isPressed = pressed;
 
     if (pressed) {
-      this.initNewLine()
+      this.brush.start();
+    } else {
+      this.brush.end();
     }
   }
 
-  private initNewLine() {
-    this.updateBuffers()
-
-    this.mesh = new Mesh(null);
-    this.mesh.material = this.mat;
-
-    this.mesh.setIndices(this.indices, null, true);
-    this.mesh.setVerticesData(VertexBuffer.PositionKind, this.positions, true, VERTEX_BUFFER_STRIDE);
-
-    this.currentIndex = 0;
+  private movement(controller: WebXRInputSource) {
+    if (!this.isPressed) return;
+    this.brush.paint(controller);
   }
 
-  private paint(controller: WebXRInputSource) {
-    if (!this.canPaint) return;
-
-    const pos = controller.pointer.position.clone();
-    this.addPoint(pos);
-  }
-
-  private addPoint(pos: Vector3) {
-    if (this.isBufferFilled()) {
-      this.resize();
-      this.updateBuffers();
-    }
-
-    const tan = this.rightHand.up.normalize().scale(this.scale);
-    const pos_ = pos.add(tan);
-
-    const lastIndex = this.currentIndex;
-
-    this.pushVertex(pos);
-    this.pushVertex(pos_);
-
-    this.pushTriangle(lastIndex,   lastIndex,   lastIndex+2, lastIndex+1); // ∆ 0 2 1
-    this.pushTriangle(lastIndex+1, lastIndex+2, lastIndex+3, lastIndex+1); // ∆ 2 3 1
-
-    this.mesh.updateIndices(this.indices, 0);
-    this.mesh.setVerticesData(VertexBuffer.PositionKind, this.positions, true, VERTEX_BUFFER_STRIDE);
-
-  }
-
-  private initBuffers () {
-    return [
-      new Float32Array(this.currentIndexBufferSize * VERTEX_BUFFER_STRIDE),
-      new Uint32Array(this.currentIndexBufferSize * VERTEX_BUFFER_STRIDE * SIMULTANEOUS_ADDED_VERTICES)
-    ]
-  }
-
-  private updateBuffers () {
-    const [posBuff, idxBuff] = this.initBuffers();
-
-    posBuff.set(this.positions || []);
-    idxBuff.set(this.indices || []);
-
-    this.indices   = idxBuff as Uint32Array;
-    this.positions = posBuff as Float32Array;
-  }
-
-  private pushVertex (pos: Vector3) {
-    const i = this.currentIndex * VERTEX_BUFFER_STRIDE;
-
-    this.positions[i]   = pos.x;
-    this.positions[i+1] = pos.y;
-    this.positions[i+2] = pos.z;
-
-    this.currentIndex++;
-  }
-
-  private pushTriangle(index, v1, v2, v3) {
-    const i = index * VERTEX_BUFFER_STRIDE;
-    this.indices[i]   = v1;
-    this.indices[i+1] = v2;
-    this.indices[i+2] = v3;
-  }
-
-  public isBufferFilled(): boolean {
-    return this.currentIndexBufferSize <= this.currentIndex + SIMULTANEOUS_ADDED_VERTICES;
-  }
-
-  public resize (mult = 2) {
-    this.currentIndexBufferSize *= mult;
-  }
 }

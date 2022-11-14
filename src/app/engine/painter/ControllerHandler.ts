@@ -2,17 +2,16 @@ import {
   Observable,
   Scene,
   Vector3,
-  WebXRControllerComponent,
   WebXRInputSource
 } from "@babylonjs/core";
-
-const BUTTON_TRIGGER_ID = 'xr-standard-trigger';
-
 
 export class ControllerHandler {
   private controller: WebXRInputSource;
 
   private lastPosition: Vector3;
+
+  private lastTriggerState: boolean = false;
+
   private _threshold: number = .0001;
 
   public get position () {
@@ -23,7 +22,11 @@ export class ControllerHandler {
     return this.controller.pointer.up.normalize();
   }
 
-  public get movementThreshold() {
+  public get pointer () {
+    return this.controller.pointer;
+  }
+
+  public get movementThreshold () {
     return this._threshold;
   }
 
@@ -35,12 +38,12 @@ export class ControllerHandler {
   }
 
   public onMove: Observable<WebXRInputSource>;
-  public onTrigger: Observable<WebXRControllerComponent>;
+  public onTrigger: Observable<boolean>;
 
   constructor(controller: WebXRInputSource, scene: Scene) {
     this.controller = controller;
-    this.onMove = new Observable();
-    this.onTrigger = new Observable();
+    this.onMove     = new Observable();
+    this.onTrigger  = new Observable();
 
     this.controller.onMotionControllerInitObservable.add((motionController) => {
       // setup initial position
@@ -49,9 +52,20 @@ export class ControllerHandler {
       // setup movement detection
       scene.onBeforeRenderObservable.add(() => this.handleMovement());
 
+
       // setup trigger
-      let triggerComponent = motionController.getComponent(BUTTON_TRIGGER_ID);
-      triggerComponent.onButtonStateChangedObservable.add(t => this.onTrigger.notifyObservers(t));
+      const triggerComponent = motionController.getMainComponent();
+      triggerComponent.onButtonStateChangedObservable.add(({pressed}) => {
+        /*
+        Trigger `start`/`end` on each frame. ><
+        https://doc.babylonjs.com/features/featuresDeepDive/webXR/webXRInputControllerSupport#events-and-changes-of-a-controller-component
+        ¯\_(ツ)_/¯
+        */
+        if (pressed != this.lastTriggerState) {
+          this.onTrigger.notifyObservers(pressed);
+          this.lastTriggerState = pressed;
+        }
+      });
     });
   }
 

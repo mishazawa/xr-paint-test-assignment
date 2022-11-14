@@ -7,7 +7,9 @@ import {
 } from '@angular/core';
 
 import {
+  Color3,
   Engine,
+  EnvironmentHelper,
   FreeCamera,
   HemisphericLight,
   Light,
@@ -29,6 +31,7 @@ export class EngineService {
   private xr: WebXRDefaultExperience;
   private scene: Scene;
   private light: Light;
+  private env: EnvironmentHelper;
 
   private _onControllerAdded: Observable<WebXRInputSource>;
 
@@ -59,11 +62,12 @@ export class EngineService {
     this.light = new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
     this.light.intensity = 0.7;
 
-    const env = this.scene.createDefaultEnvironment();
+    this.env = this.scene.createDefaultEnvironment({enableGroundShadow: true});
+    this.env.setMainColor(Color3.FromHexString("#74b9ff"))
 
     // here we add XR support
     this.xr = await this.scene.createDefaultXRExperienceAsync({
-      floorMeshes: [env.ground],
+      floorMeshes: [this.env.ground],
     });
 
     this.xr.input.onControllerAddedObservable.add((controller) => {
