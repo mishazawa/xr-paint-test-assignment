@@ -56,8 +56,8 @@ export class EngineService {
     this.scene = new Scene(this.engine);
 
     this.camera = new FreeCamera('camera1', CAMERA_POSITION, this.scene);
-    this.camera.setTarget(Vector3.Zero());
-    this.camera.attachControl(this.canvas, false);
+    this.camera.attachControl(this.canvas, true);
+    this.camera.minZ = 0.1;
 
     this.light = new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
     this.light.intensity = 0.7;

@@ -1,5 +1,6 @@
 import {
   Observable,
+  PointerEventTypes,
   Scene,
   Vector3,
   WebXRInputSource
@@ -9,8 +10,6 @@ export class ControllerHandler {
   private controller: WebXRInputSource;
 
   private lastPosition: Vector3;
-
-  private lastTriggerState: boolean = false;
 
   private _threshold: number = .0001;
 
@@ -52,18 +51,15 @@ export class ControllerHandler {
       // setup movement detection
       scene.onBeforeRenderObservable.add(() => this.handleMovement());
 
-
       // setup trigger
       const triggerComponent = motionController.getMainComponent();
-      triggerComponent.onButtonStateChangedObservable.add(({pressed}) => {
+      triggerComponent.onButtonStateChangedObservable.add(({hasChanges, pressed}) => {
         /*
-        Trigger `start`/`end` on each frame. ><
-        https://doc.babylonjs.com/features/featuresDeepDive/webXR/webXRInputControllerSupport#events-and-changes-of-a-controller-component
-        ¯\_(ツ)_/¯
+          https://doc.babylonjs.com/features/featuresDeepDive/webXR/webXRInputControllerSupport#events-and-changes-of-a-controller-component
+          this event triggered every frame, so then check if there any changes?
         */
-        if (pressed != this.lastTriggerState) {
+        if (hasChanges) {
           this.onTrigger.notifyObservers(pressed);
-          this.lastTriggerState = pressed;
         }
       });
     });

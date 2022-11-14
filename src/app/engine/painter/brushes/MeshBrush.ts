@@ -4,6 +4,9 @@ import { Color3, Mesh, Scene, StandardMaterial, Vector3, VertexBuffer, WebXRInpu
 const SIMULTANEOUS_ADDED_VERTICES = 2;
 const VERTEX_BUFFER_STRIDE = 3;
 
+const BRUSH_SIZE_MIN = .01;
+const BRUSH_SIZE_MAX = 1;
+
 interface MeshBrushProps {
   scene: Scene,
 }
@@ -25,7 +28,7 @@ export class MeshBrush implements IBrush {
   }
 
   public setSize(val: number) {
-    this.scale = val;
+    this.scale = val <= 0 ? BRUSH_SIZE_MIN : val >= BRUSH_SIZE_MAX ? BRUSH_SIZE_MAX : val;
   }
 
   public setColor (val: Color3) {
