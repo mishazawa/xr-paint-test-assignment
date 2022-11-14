@@ -1,32 +1,40 @@
-# ng-babylon
+### Manual
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) and is designed as a basic template for [BabylonJS](https://www.babylonjs.com/) combined with [Angular](https://angular.io/) and [Bootstrap](https://getbootstrap.com/) in Version 4.0
+1. clone repository
+2. install dependencies `yarn` 
+3. run `yarn start`
 
-The project is setup to use global [SCSS](https://sass-lang.com/) only and [ViewEncapsulation.None](https://angular.io/api/core/ViewEncapsulation).
+### Deploy
 
-Feel free to do anything you want with this template.
+1. build `yarn build:prod`
+2. push to firebase `yarn deploy`
 
-## Development server
+[Online demo https://xr-paint.web.app/](https://xr-paint.web.app/)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+### Controls 
 
-## Code scaffolding
+ - `+` button - increase brush size (max = 1 meter)
+ - `-` button - decrease brush size (min = .01 meter)
+ - `R` button - assing random color to brush
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+<img width="124" alt="image" src="https://user-images.githubusercontent.com/7611372/201619757-79d8619b-fba7-4f3f-82c0-04dfc042e29c.png">
 
-## Build
+### Repository structure
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+`app/engine/engine.service.ts` - Babylon scene setup. Initialize camera, environment, XR.
 
-## Running unit tests
+`app/engine/engine.component.ts` - Main component. Initialize controllers, setup brushes, menu.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+`app/engine/painter/ControllerHandler.ts` - Controller wrapper. Handle motion events and trigger button.
 
-## Running end-to-end tests
+`app/engine/painter/painter.service.ts` - Brush servise. Hold current brush and controller state.
 
-Choose your favorite e2e testing framework  
-Recommendation: [Cypress Angular Schematic](https://www.npmjs.com/package/@cypress/schematic).
+`app/engine/painter/brushes/IBrush.ts` - Brush interface. Set of methods that brush should implement.
 
-## Further help
+`app/engine/painter/brushes/MeshBrush.ts` - Brush to draw meshes. Collect points when controller moves and generate ribbon. Use `Mesh` API and `StandardMaterial`.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+`app/engine/painter/brushes/CubeBrush.ts` - Example `IBrush`. Just spawn cube and move it.
+
+### Used emulator
+
+[MozillaReality/WebXR-emulator-extension](https://github.com/MozillaReality/WebXR-emulator-extension)
