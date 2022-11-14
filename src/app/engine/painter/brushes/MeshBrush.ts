@@ -71,7 +71,7 @@ export class MeshBrush implements IBrush {
 
     const pos_ = pos.add(up);
 
-    const lastIndex = this.currentIndex;
+    const lastIndex = this.currentIndex - 2;
 
     this.pushVertex(pos);
     this.pushVertex(pos_);
